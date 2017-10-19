@@ -1,7 +1,7 @@
 package jsonapi
 
 type singleRelationship struct {
-	Data *ReferenceNode `json:"data"`
+	Data BaseNode `json:"data"`
 }
 
 // NewSingleRelationship will return a RelationshipManager capable of
@@ -11,10 +11,10 @@ func NewSingleRelationship() RelationshipManager {
 }
 
 // Append will set the Node as the relationships target
-func (rel *singleRelationship) Append(node *Node) {
-	rel.Data = &ReferenceNode{
-		ID:   node.ID,
-		Type: node.Type,
+func (rel *singleRelationship) Append(n BaseNode) {
+	rel.Data = &referenceNode{
+		ID:   n.GetID(),
+		Type: n.GetType(),
 	}
 	return
 }

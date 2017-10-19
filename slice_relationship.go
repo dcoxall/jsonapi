@@ -1,7 +1,7 @@
 package jsonapi
 
 type sliceRelationship struct {
-	Data []*ReferenceNode `json:"data"`
+	Data []BaseNode `json:"data"`
 }
 
 // NewSliceRelationship will return a RelationshipManager capable of
@@ -11,12 +11,12 @@ func NewSliceRelationship() RelationshipManager {
 }
 
 // Append will add a Node into the relationship
-func (rel *sliceRelationship) Append(node *Node) {
+func (rel *sliceRelationship) Append(n BaseNode) {
 	rel.Data = append(
 		rel.Data,
-		&ReferenceNode{
-			ID:   node.ID,
-			Type: node.Type,
+		&referenceNode{
+			ID:   n.GetID(),
+			Type: n.GetType(),
 		},
 	)
 	return

@@ -49,8 +49,8 @@ func (enc *coreEncoder) Encode(model interface{}) (err error) {
 	return
 }
 
-func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bool) *Node {
-	node := &Node{
+func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bool) Node {
+	node := &coreNode{
 		Attributes:    NewAttributes(),
 		Relationships: NewRelationships(),
 	}
@@ -101,7 +101,7 @@ func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bo
 			continue
 		} else if tag.IsAttribute() {
 			attrName, _ := tag.GetAttributeName()
-			node.Attributes.Append(attrName, attribute(tag, value))
+			node.GetAttributes().Append(attrName, attribute(tag, value))
 		} else if tag.IsRelation() {
 			relationName, _ := tag.GetRelationName()
 			if value.Kind() == reflect.Ptr {
@@ -120,7 +120,7 @@ func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bo
 				relManager = NewSingleRelationship()
 				relManager.Append(buildNode(cache, value, includer, true))
 			}
-			node.Relationships.Append(relationName, relManager)
+			node.GetRelationships().Append(relationName, relManager)
 		}
 	}
 

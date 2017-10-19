@@ -13,7 +13,7 @@ type Relationships interface {
 // a particular relationship. The RelationshipManager only ever represents a
 // single relationship.
 type RelationshipManager interface {
-	Append(*Node)
+	Append(BaseNode)
 }
 
 // NewRelationships will return a Relationships structure capable of
