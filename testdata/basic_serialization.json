@@ -1,0 +1,34 @@
+{
+  "data": {
+    "id": "book-123",
+    "type": "book",
+    "attributes": {
+      "name": "Awesome Book"
+    },
+    "relationships": {
+      "author": {
+        "data": {
+          "id": "author-123",
+          "type": "author"
+        }
+      }
+    }
+  },
+  "included": [
+    {
+      "id": "author-123",
+      "type": "author",
+      "attributes": {
+        "name": "Jane Doe"
+      },
+      "relationships": {
+        "book": {
+          "data": {
+            "id": "book-123",
+            "type": "book"
+          }
+        }
+      }
+    }
+  ]
+}
