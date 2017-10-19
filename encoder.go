@@ -23,25 +23,36 @@ func NewEncoder(writer io.Writer) Encoder {
 func (enc *coreEncoder) Encode(model interface{}) (err error) {
 	// create a cache to store visited nodes
 	cache := NewCache()
-
-	included := make([]*Node, 0)
-
-	primaryNode := buildNode(cache, reflect.ValueOf(model), &included, false)
 	encoder := json.NewEncoder(enc.target)
 
-	result := &SingleModel{
-		Data:     primaryNode,
-		Included: included,
+	// TODO: fix duplication in buildNode
+	// resolve pointer if appropriate
+	val := reflect.ValueOf(model)
+	if val.Kind() == reflect.Ptr {
+		val = reflect.Indirect(val)
 	}
+
+	var result JSONAPIResult
+
+	if val.Kind() == reflect.Slice {
+		result = NewSliceResponse()
+		for i := 0; i < val.Len(); i++ {
+			result.AppendData(buildNode(cache, val.Index(i), result, false))
+		}
+	} else {
+		result = NewSingleResponse()
+		result.AppendData(buildNode(cache, val, result, false))
+	}
+
 	err = encoder.Encode(result)
 
 	return
 }
 
-func buildNode(cache Cache, val reflect.Value, included *[]*Node, addIncluded bool) *Node {
+func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bool) *Node {
 	node := &Node{
-		Attributes:    make(map[string]interface{}),
-		Relationships: make(map[string]interface{}),
+		Attributes:    NewAttributes(),
+		Relationships: NewRelationships(),
 	}
 
 	// resolve pointer if appropriate
@@ -90,28 +101,34 @@ func buildNode(cache Cache, val reflect.Value, included *[]*Node, addIncluded bo
 			continue
 		} else if tag.IsAttribute() {
 			attrName, _ := tag.GetAttributeName()
-			node.Attributes[attrName] = attribute(tag, value)
+			node.Attributes.Append(attrName, attribute(tag, value))
 		} else if tag.IsRelation() {
 			relationName, _ := tag.GetRelationName()
-			relationNode := buildNode(cache, value, included, true)
-			node.Relationships[relationName] = minimalNode(relationNode)
+			if value.Kind() == reflect.Ptr {
+				value = reflect.Indirect(value)
+			}
+
+			var relManager RelationshipManager
+			if value.Kind() == reflect.Slice {
+				relManager = NewSliceRelationship()
+				for x := 0; x < value.Len(); x++ {
+					relManager.Append(
+						buildNode(cache, value.Index(x), includer, true),
+					)
+				}
+			} else {
+				relManager = NewSingleRelationship()
+				relManager.Append(buildNode(cache, value, includer, true))
+			}
+			node.Relationships.Append(relationName, relManager)
 		}
 	}
 
 	if addIncluded {
-		*included = append(*included, node)
+		includer.AppendIncluded(node)
 	}
 
 	return node
-}
-
-func minimalNode(node *Node) interface{} {
-	return &SingleModel{
-		Data: &Node{
-			ID:   node.ID,
-			Type: node.Type,
-		},
-	}
 }
 
 func attribute(tag Tag, val reflect.Value) interface{} {

@@ -17,10 +17,8 @@ func NewCache() Cache {
 }
 
 func (cache *coreCache) Add(node *Node) (bool, *Node) {
-	fmt.Printf("Attempting add for %#v\n", node)
 	key := fmt.Sprintf("%s=>%s", node.Type, node.ID)
 	if existing, ok := cache.store[key]; ok {
-		fmt.Printf("Already present %#v", existing)
 		return false, existing
 	}
 	cache.store[key] = node

@@ -1,0 +1,59 @@
+{
+  "data": {
+    "id": "book-123",
+    "type": "book",
+    "attributes": {
+      "name": "Awesome Book"
+    },
+    "relationships": {
+      "authors": {
+        "data": [
+          {
+            "id": "author-123",
+            "type": "author"
+          },
+          {
+            "id": "author-234",
+            "type": "author"
+          }
+        ]
+      }
+    }
+  },
+  "included": [
+    {
+      "id": "author-123",
+      "type": "author",
+      "attributes": {
+        "name": "Jane Doe"
+      },
+      "relationships": {
+        "books": {
+          "data": [
+            {
+              "id": "book-123",
+              "type": "book"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "author-234",
+      "type": "author",
+      "attributes": {
+        "name": "John Doe"
+      },
+      "relationships": {
+        "books": {
+          "data": [
+            {
+              "id": "book-123",
+              "type": "book"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
