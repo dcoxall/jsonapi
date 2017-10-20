@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
+	"time"
 )
 
 type Author struct {
@@ -34,6 +35,24 @@ type MultiAuthorBook struct {
 
 type VariableIDType struct {
 	ID interface{} `jsonapi:"primary,vari-id"`
+}
+
+type PlainStruct struct {
+	Time  time.Time `json:"time"`
+	Place string    `json:"place"`
+}
+
+type CompositeStructA struct {
+	CompositeStructB
+	ID           string `jsonapi:"primary,comp-a"`
+	StringField  string `jsonapi:"attr,string"`
+	IntField     int    `jsonapi:"attr,integer"`
+	IgnoredField string `jsonapi:"-"`
+}
+
+type CompositeStructB struct {
+	BooleanField bool        `json:"boolean"`
+	StructField  PlainStruct `json:"object"`
 }
 
 func TestBasicSerialization(t *testing.T) {
@@ -153,4 +172,31 @@ func TestIDSerialization(t *testing.T) {
 			assert.JSONEq(t, test.expectation, buffer.String())
 		})
 	}
+}
+
+func TestCompositeStructSerialization(t *testing.T) {
+	obj := &CompositeStructA{
+		ID:           "composite-123",
+		StringField:  "this is a string",
+		IntField:     -123,
+		IgnoredField: "YOU CAN'T SEE ME",
+		CompositeStructB: CompositeStructB{
+			BooleanField: true,
+			StructField: PlainStruct{
+				Time:  time.Date(2017, time.October, 20, 14, 43, 0, 0, time.FixedZone("BST", 3600)),
+				Place: "Hertfordshire",
+			},
+		},
+	}
+	buffer := &bytes.Buffer{}
+	encoder := NewEncoder(buffer)
+
+	err := encoder.Encode(obj)
+	assert.NoError(t, err)
+
+	expected, err := ioutil.ReadFile(
+		"testdata/composite_serialization.json",
+	)
+	assert.NoError(t, err)
+	assert.JSONEq(t, string(expected), buffer.String())
 }

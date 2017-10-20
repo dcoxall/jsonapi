@@ -21,7 +21,7 @@ func newRelationships() RelationshipsObject {
 }
 
 type relations struct {
-	storage map[string]Relationship `json:"data"`
+	storage map[string]Relationship
 }
 
 func (rels *relations) MarshalJSON() ([]byte, error) {

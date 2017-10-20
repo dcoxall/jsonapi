@@ -67,7 +67,11 @@ func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bo
 		// at this stage we only want to find the id and type
 		// but we also need to watch relationships so we don't
 		// need to iterate over it all again
-		tag := ParseTag(field.Tag.Get(TagName))
+		// TODO: error handling
+		tag, err := ParseTag(field)
+		if err != nil {
+			panic(err.Error())
+		}
 		if !tag.IsPrimary() {
 			continue
 		}
@@ -96,13 +100,20 @@ func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bo
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
 		value := val.Field(i)
-		tag := ParseTag(field.Tag.Get(TagName))
+		// TODO:: error handling
+		tag, err := ParseTag(field)
+		if err != nil {
+			panic(err.Error())
+		}
+
 		// this time we can skip the primary field
 		if tag.IsPrimary() {
 			continue
 		} else if tag.IsAttribute() {
 			attrName, _ := tag.GetAttributeName()
-			resource.GetAttributes().Append(attrName, attribute(tag, value))
+			// Using value.Interface() so the json encoder can handle the
+			// serialization of attributes
+			resource.GetAttributes().Append(attrName, value.Interface())
 		} else if tag.IsRelation() {
 			relationName, _ := tag.GetRelationName()
 			if value.Kind() == reflect.Ptr {
@@ -132,11 +143,6 @@ func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bo
 	return resource
 }
 
-func attribute(tag Tag, val reflect.Value) interface{} {
-	// TODO: handle types other than string
-	return val.String()
-}
-
 // JSONAPI expects IDs to be a string so we need to convert
 func formatID(value reflect.Value) (string, error) {
 	if value.Kind() == reflect.Interface {
@@ -163,5 +169,4 @@ func formatID(value reflect.Value) (string, error) {
 	default:
 		return "", fmt.Errorf("Unable to convert ID to string")
 	}
-
 }

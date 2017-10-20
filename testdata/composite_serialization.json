@@ -1,0 +1,17 @@
+{
+  "data": {
+    "id": "composite-123",
+    "type": "comp-a",
+    "attributes": {
+      "string": "this is a string",
+      "integer": -123,
+      "CompositeStructB": {
+        "boolean": true,
+        "object": {
+          "time": "2017-10-20T14:43:00+01:00",
+          "place": "Hertfordshire"
+        }
+      }
+    }
+  }
+}
