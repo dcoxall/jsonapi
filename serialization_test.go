@@ -2,6 +2,7 @@ package jsonapi
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
@@ -29,6 +30,10 @@ type MultiAuthorBook struct {
 	ID      string               `jsonapi:"primary,book"`
 	Name    string               `jsonapi:"attr,name"`
 	Authors []*MultiAuthorAuthor `jsonapi:"relation,authors"`
+}
+
+type VariableIDType struct {
+	ID interface{} `jsonapi:"primary,vari-id"`
 }
 
 func TestBasicSerialization(t *testing.T) {
@@ -114,4 +119,38 @@ func TestSliceRelationshipSerialization(t *testing.T) {
 	)
 	assert.NoError(t, err)
 	assert.JSONEq(t, string(expected), buffer.String())
+}
+
+func TestIDSerialization(t *testing.T) {
+	tests := []struct {
+		typeName    string
+		idValue     interface{}
+		expectation string
+	}{
+		{"float32", float32(1.23), `{"data":{"type":"vari-id","id":"1.23"}}`},
+		{"float64", float64(1.23), `{"data":{"type":"vari-id","id":"1.23"}}`},
+		{"int", int(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"int8", int8(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"int16", int16(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"int32", int32(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"int64", int64(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"uint", uint(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"uint8", uint8(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"uint16", uint16(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"uint32", uint32(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"uint64", uint64(123), `{"data":{"type":"vari-id","id":"123"}}`},
+		{"complex32", complex(float32(1.23), float32(0)), `{"data":{"type":"vari-id","id":"(1.23+0i)"}}`},
+		{"complex64", complex(float64(1.23), float64(0)), `{"data":{"type":"vari-id","id":"(1.23+0i)"}}`},
+		{"string", "foo", `{"data":{"type":"vari-id","id":"foo"}}`},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Serializing IDs with a type of %s", test.typeName), func(t *testing.T) {
+			obj := VariableIDType{ID: test.idValue}
+			buffer := &bytes.Buffer{}
+			encoder := NewEncoder(buffer)
+			assert.NoError(t, encoder.Encode(obj))
+			assert.JSONEq(t, test.expectation, buffer.String())
+		})
+	}
 }

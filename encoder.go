@@ -2,8 +2,10 @@ package jsonapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"reflect"
+	"strconv"
 )
 
 type Encoder interface {
@@ -71,7 +73,9 @@ func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bo
 		}
 
 		// set the id and type for the node
-		resource.SetID(value.String())
+		// TODO: handle error
+		resourceID, _ := formatID(value)
+		resource.SetID(resourceID)
 		resourceType, _ := tag.GetTypeIdentifier()
 		resource.SetType(resourceType)
 	}
@@ -131,4 +135,33 @@ func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bo
 func attribute(tag Tag, val reflect.Value) interface{} {
 	// TODO: handle types other than string
 	return val.String()
+}
+
+// JSONAPI expects IDs to be a string so we need to convert
+func formatID(value reflect.Value) (string, error) {
+	if value.Kind() == reflect.Interface {
+		value = value.Elem()
+	}
+
+	switch value.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return strconv.FormatInt(value.Int(), 10), nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return strconv.FormatUint(value.Uint(), 10), nil
+	case reflect.Float32:
+		v, _ := value.Interface().(float32)
+		return fmt.Sprintf("%G", v), nil
+	case reflect.Float64:
+		return fmt.Sprintf("%G", value.Float()), nil
+	case reflect.Complex64:
+		v, _ := value.Interface().(complex64)
+		return fmt.Sprintf("%G", v), nil
+	case reflect.Complex128:
+		return fmt.Sprintf("%G", value.Complex()), nil
+	case reflect.String:
+		return value.String(), nil
+	default:
+		return "", fmt.Errorf("Unable to convert ID to string")
+	}
+
 }
