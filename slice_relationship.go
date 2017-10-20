@@ -1,20 +1,17 @@
 package jsonapi
 
 type sliceRelationship struct {
-	Data []BaseNode `json:"data"`
+	Data []ResourceIdentifier `json:"data"`
 }
 
-// NewSliceRelationship will return a RelationshipManager capable of
-// representing many nodes in a single relationship
-func NewSliceRelationship() RelationshipManager {
+func newSliceRelationship() Relationship {
 	return &sliceRelationship{}
 }
 
-// Append will add a Node into the relationship
-func (rel *sliceRelationship) Append(n BaseNode) {
+func (rel *sliceRelationship) Append(n ResourceIdentifier) {
 	rel.Data = append(
 		rel.Data,
-		&referenceNode{
+		&coreResIdentifier{
 			ID:   n.GetID(),
 			Type: n.GetType(),
 		},

@@ -32,15 +32,15 @@ func (enc *coreEncoder) Encode(model interface{}) (err error) {
 		val = reflect.Indirect(val)
 	}
 
-	var result JSONAPIResult
+	var result Document
 
 	if val.Kind() == reflect.Slice {
-		result = NewSliceResponse()
+		result = newSliceDocument()
 		for i := 0; i < val.Len(); i++ {
 			result.AppendData(buildNode(cache, val.Index(i), result, false))
 		}
 	} else {
-		result = NewSingleResponse()
+		result = newSingleDocument()
 		result.AppendData(buildNode(cache, val, result, false))
 	}
 
@@ -49,11 +49,8 @@ func (enc *coreEncoder) Encode(model interface{}) (err error) {
 	return
 }
 
-func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bool) Node {
-	node := &coreNode{
-		Attributes:    NewAttributes(),
-		Relationships: NewRelationships(),
-	}
+func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bool) ResourceObject {
+	resource := NewResourceObject()
 
 	// resolve pointer if appropriate
 	if val.Kind() == reflect.Ptr {
@@ -74,13 +71,13 @@ func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bo
 		}
 
 		// set the id and type for the node
-		node.ID = value.String()
-		nodeType, _ := tag.GetTypeIdentifier()
-		node.Type = nodeType
+		resource.SetID(value.String())
+		resourceType, _ := tag.GetTypeIdentifier()
+		resource.SetType(resourceType)
 	}
 
 	// at this stage we should have a cacheable node so let's do that
-	if ok, existing := cache.Add(node); !ok {
+	if ok, existing := cache.Add(resource); !ok {
 		// unable to add to cache so let's assume it was already added
 		// therefore we don't need to traverse the objects relationships
 		// and attributes. Instead we can just return the existing
@@ -101,34 +98,34 @@ func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bo
 			continue
 		} else if tag.IsAttribute() {
 			attrName, _ := tag.GetAttributeName()
-			node.GetAttributes().Append(attrName, attribute(tag, value))
+			resource.GetAttributes().Append(attrName, attribute(tag, value))
 		} else if tag.IsRelation() {
 			relationName, _ := tag.GetRelationName()
 			if value.Kind() == reflect.Ptr {
 				value = reflect.Indirect(value)
 			}
 
-			var relManager RelationshipManager
+			var relManager Relationship
 			if value.Kind() == reflect.Slice {
-				relManager = NewSliceRelationship()
+				relManager = newSliceRelationship()
 				for x := 0; x < value.Len(); x++ {
 					relManager.Append(
 						buildNode(cache, value.Index(x), includer, true),
 					)
 				}
 			} else {
-				relManager = NewSingleRelationship()
+				relManager = newSingleRelationship()
 				relManager.Append(buildNode(cache, value, includer, true))
 			}
-			node.GetRelationships().Append(relationName, relManager)
+			resource.GetRelationships().Append(relationName, relManager)
 		}
 	}
 
 	if addIncluded {
-		includer.AppendIncluded(node)
+		includer.AppendIncluded(resource)
 	}
 
-	return node
+	return resource
 }
 
 func attribute(tag Tag, val reflect.Value) interface{} {

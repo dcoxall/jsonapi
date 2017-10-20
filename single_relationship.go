@@ -1,18 +1,15 @@
 package jsonapi
 
 type singleRelationship struct {
-	Data BaseNode `json:"data"`
+	Data ResourceIdentifier `json:"data"`
 }
 
-// NewSingleRelationship will return a RelationshipManager capable of
-// representing a single Node relationship
-func NewSingleRelationship() RelationshipManager {
+func newSingleRelationship() Relationship {
 	return &singleRelationship{}
 }
 
-// Append will set the Node as the relationships target
-func (rel *singleRelationship) Append(n BaseNode) {
-	rel.Data = &referenceNode{
+func (rel *singleRelationship) Append(n ResourceIdentifier) {
+	rel.Data = &coreResIdentifier{
 		ID:   n.GetID(),
 		Type: n.GetType(),
 	}
