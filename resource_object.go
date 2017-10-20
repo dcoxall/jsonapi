@@ -27,17 +27,14 @@ type ResourceIdentifier interface {
 }
 
 type coreResourceObject struct {
-	ID                  string              `json:"id,omitempty"`
-	Type                string              `json:"type"`
-	Attributes          Attributes          `json:"attributes,omitempty"`
-	RelationshipsObject RelationshipsObject `json:"relationships,omitempty"`
+	ID            string              `json:"id,omitempty"`
+	Type          string              `json:"type"`
+	Attributes    Attributes          `json:"attributes,omitempty"`
+	Relationships RelationshipsObject `json:"relationships,omitempty"`
 }
 
-func NewResourceObject() ResourceObject {
-	return &coreResourceObject{
-		Attributes:          newAttributes(),
-		RelationshipsObject: newRelationships(),
-	}
+func newResourceObject() ResourceObject {
+	return &coreResourceObject{}
 }
 
 func (n *coreResourceObject) GetID() string {
@@ -59,11 +56,17 @@ func (n *coreResourceObject) SetType(t string) {
 }
 
 func (n *coreResourceObject) GetAttributes() Attributes {
+	if n.Attributes == nil {
+		n.Attributes = newAttributes()
+	}
 	return n.Attributes
 }
 
 func (n *coreResourceObject) GetRelationships() RelationshipsObject {
-	return n.RelationshipsObject
+	if n.Relationships == nil {
+		n.Relationships = newRelationships()
+	}
+	return n.Relationships
 }
 
 type coreResIdentifier struct {

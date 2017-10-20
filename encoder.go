@@ -52,7 +52,7 @@ func (enc *coreEncoder) Encode(model interface{}) (err error) {
 }
 
 func buildNode(cache Cache, val reflect.Value, includer Includer, addIncluded bool) ResourceObject {
-	resource := NewResourceObject()
+	resource := newResourceObject()
 
 	// resolve pointer if appropriate
 	if val.Kind() == reflect.Ptr {
