@@ -55,6 +55,11 @@ type CompositeStructB struct {
 	StructField  PlainStruct `json:"object"`
 }
 
+type InvalidTag struct {
+	ID    string `jsonapi:"primary,invalid"`
+	Value string `jsonapi:"attribute,value"` // attribute instead of attr
+}
+
 func TestBasicSerialization(t *testing.T) {
 	book := &Book{
 		ID:   "book-123",
@@ -199,4 +204,14 @@ func TestCompositeStructSerialization(t *testing.T) {
 	)
 	assert.NoError(t, err)
 	assert.JSONEq(t, string(expected), buffer.String())
+}
+
+func TestTagSerializationError(t *testing.T) {
+	obj := &InvalidTag{
+		ID:    "1234",
+		Value: "foobar",
+	}
+	buffer := &bytes.Buffer{}
+	encoder := NewEncoder(buffer)
+	assert.Error(t, encoder.Encode(obj))
 }
