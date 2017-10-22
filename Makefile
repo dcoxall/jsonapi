@@ -1,7 +1,8 @@
 files := $(shell find . -name vendor -prune -o -name '*.go' -print)
+TESTARGS ?= -cover
 
-test: vendor
-	@go test -cover ./...
+test: vendor vet
+	@go test ${TESTARGS} ./...
 
 fmt:
 	@gofmt -l -s -w $(files)
@@ -9,4 +10,7 @@ fmt:
 vendor:
 	@dep ensure
 
-.PHONY: test fmt vendor
+vet:
+	@go vet ./...
+
+.PHONY: test fmt vendor vet
