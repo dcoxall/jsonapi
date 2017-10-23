@@ -14,18 +14,25 @@ type Encoder interface {
 }
 
 type coreEncoder struct {
-	target io.Writer
+	encoder *json.Encoder
 }
 
 func NewEncoder(writer io.Writer) Encoder {
 	return &coreEncoder{
-		target: writer,
+		encoder: json.NewEncoder(writer),
+	}
+}
+
+func NewIndentEncoder(writer io.Writer, prefix, indent string) Encoder {
+	encoder := json.NewEncoder(writer)
+	encoder.SetIndent(prefix, indent)
+	return &coreEncoder{
+		encoder: encoder,
 	}
 }
 
 func (enc *coreEncoder) Encode(model interface{}) error {
 	cache := NewCache()
-	encoder := json.NewEncoder(enc.target)
 
 	// TODO: fix duplication in buildNode
 	val := reflect.ValueOf(model)
@@ -53,7 +60,7 @@ func (enc *coreEncoder) Encode(model interface{}) error {
 		result.AppendData(resource)
 	}
 
-	return encoder.Encode(result)
+	return enc.encoder.Encode(result)
 }
 
 func buildResource(cache Cache, val reflect.Value, includer Includer, addIncluded bool) (ResourceObject, error) {
